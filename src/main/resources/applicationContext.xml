@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd">
+
+	<context:component-scan base-package="com.spring.biz"></context:component-scan>
+
+	<!-- DataSource 설정 -->
+	<!-- 데이터베이스 설정 -->
+	<bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" />
+		<property name="url" value="jdbc:oracle:thin:@localhost:1521:XE" />
+		<property name="username" value="madang" />
+		<property name="password" value="madang" />
+	</bean>
+	
+	<!-- myBatis 설정정보  sessionFactory에대한 bean 생성-->
+	<!-- 앞에서는 new로 객체를 만들어 줬음 // 앞에 클래스로 만드는방식이였다면 이건 bean방식으로 만드는 것-->
+	<!-- 팩토리랑 데이터베이스를 연결시켜주는 역할임-->
+	
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation" value="classpath:sql-map-config.xml"></property>
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+	<!-- sqlSession 인스턴스(bean) 생성 -->
+	<bean class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="sqlSession"></constructor-arg>
+	</bean>
+ 	
+	<bean id="afterReturning" class="com.spring.biz.common.AfterReturningAdvice"></bean>
+	
+	<aop:config>
+		<aop:pointcut id="allPointcut" expression="execution(* com.spring.biz..*Impl.*(..))"/>
+		<aop:pointcut id="getPointcut" expression="execution(* com.spring.biz..*Impl.get*(..))"/>
+		
+		<aop:aspect ref="afterReturning">
+			<aop:after-returning pointcut-ref="getPointcut" method="afterLog" returning="returnObj"/>
+		</aop:aspect>
+	</aop:config>
+</beans>
